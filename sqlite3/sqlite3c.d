@@ -6,11 +6,6 @@ class sqlite3c
 {
 	sqlite3* db = null;
 
-	@property string _version()
-	{
-		return libversion();
-	}
-
 	string libversion() const
 	{
 		return sqlite3_libversion().to!string();
@@ -21,7 +16,7 @@ class sqlite3c
 		return sqlite3_open(filename, &db);
 	}
 
-	int open(const char* filename, int flags, const char *zVfs)
+	int open_v2(const char* filename, int flags, const char *zVfs)
 	{
 		return sqlite3_open_v2(filename, &db, flags, zVfs);
 	}
@@ -44,6 +39,21 @@ class sqlite3c
 	int prepare(string zSql, sqlite3_stmt** ppStmt, const char** pzTail)
 	{
 		return sqlite3_prepare(db, zSql.ptr, char.sizeof * zSql.length, ppStmt, pzTail);
+	}
+
+	int prepare_v2(string zSql, sqlite3_stmt** ppStmt, const char** pzTail)
+	{
+		return sqlite3_prepare_v2(db, zSql.ptr, char.sizeof * zSql.length, ppStmt, pzTail);
+	}
+
+	int prepare16(string zSql, sqlite3_stmt** ppStmt, const wchar** pzTail)
+	{
+		return sqlite3_prepare16(db, zSql.ptr, char.sizeof * zSql.length, ppStmt, pzTail);
+	}
+
+	int prepare16_v2(string zSql, sqlite3_stmt** ppStmt, const wchar** pzTail)
+	{
+		return sqlite3_prepare16_v2(db, zSql.ptr, char.sizeof * zSql.length, ppStmt, pzTail);
 	}
 
 	int step(sqlite3_stmt* pStmt) const
@@ -74,6 +84,11 @@ class sqlite3c
 	int changes()
 	{
 		return sqlite3_changes(db);
+	}
+
+	void interrupt()
+	{
+		sqlite3_interrupt(db);
 	}
 
 	int complete(const char* sql) const
