@@ -6,9 +6,41 @@ class sqlite3c
 {
 	sqlite3* db = null;
 
+	// Run-Time Library Version Numbers
+
 	string libversion() const
 	{
 		return sqlite3_libversion().to!string();
+	}
+
+	string sourceid() const
+	{
+		return sqlite3_sourceid().to!string();
+	}
+
+	int libversion_number() const
+	{
+		return sqlite3_libversion_number();
+	}
+
+	//^Run-Time Library Version Numbers
+
+	// Test To See If The Library Is Threadsafe
+	int threadsafe() const
+	{
+		return sqlite3_threadsafe();
+	}
+	
+	// Closing A Database Connection
+	int close()
+	{
+		return sqlite3_close(db);
+	}
+
+	// One-Step Query Execution Interface
+	int exec(sqlite3* pDb, const char* sql, sqlite3_callback callback, void* arg, char** errmsg)
+	{
+		return sqlite3_exec(db, sql, callback, arg, errmsg);
 	}
 
 	int open(const char* filename)
@@ -24,16 +56,6 @@ class sqlite3c
 	int open16(const wchar* filename)
 	{
 		return sqlite3_open16(filename, &db);
-	}
-
-	int close()
-	{
-		return sqlite3_close(db);
-	}
-
-	int exec(sqlite3* pDb, const char* sql, sqlite3_callback callback, void* arg, char** errmsg)
-	{
-		return sqlite3_exec(db, sql, callback, arg, errmsg);
 	}
 
 	int prepare(string zSql, sqlite3_stmt** ppStmt, const char** pzTail)
@@ -71,11 +93,6 @@ class sqlite3c
 		return sqlite3_limit(db, id, newVal);
 	}
 
-	int threadsafe() const
-	{
-		return sqlite3_threadsafe();
-	}
-
 	int finalize(sqlite3_stmt* pStmt) const
 	{
 		return sqlite3_finalize(pStmt);
@@ -101,6 +118,8 @@ class sqlite3c
 		return sqlite3_complete16(sql);
 	}
 
+	// Initialize The SQLite Library
+
 	int initialize() const
 	{
 		return sqlite3_initialize();
@@ -120,6 +139,8 @@ class sqlite3c
 	{
 		return sqlite3_os_end();
 	}
+
+	//^Initialize The SQLite Library
 
 	void* user_data(sqlite3_context* pContext)
 	{
@@ -244,11 +265,6 @@ class sqlite3c
 	int db_readonly(const char *zDbName)
 	{
 		return sqlite3_db_readonly(db, zDbName);
-	}
-
-	int db_release_memory()
-	{
-		return sqlite3_db_release_memory(db);
 	}
 
 	int db_status(in int op, ref int iCur, ref int iHiwtr, in bool resetFlg)
