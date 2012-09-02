@@ -733,11 +733,8 @@ extern(C)
 	// Impose A Limit On Heap Size
 	sqlite3_int64 sqlite3_soft_heap_limit64(sqlite3_int64 N);
 
-	deprecated
-	{
-		// Deprecated Soft Heap Limit Interface
-		void sqlite3_soft_heap_limit(int N);
-	}
+	// Deprecated Soft Heap Limit Interface
+	deprecated void sqlite3_soft_heap_limit(int N);
 
 	// Extract Metadata About A Column Of A Table
 	int sqlite3_table_column_metadata(sqlite3 *pDb, const char* zDbName, const char* zTableName, const char* zColumnName, const char** pzDataType, const char** pzCollSeq, int* pNotNull, int* pPrimaryKey, int* pAutoinc);
@@ -757,33 +754,31 @@ extern(C)
 	// Virtual Table Object
 	struct sqlite3_module
 	{
-/+
-	int iVersion;
-	int (*xCreate)(sqlite3*, void *pAux, int argc, const char *const*argv, sqlite3_vtab **ppVTab, char**);
-	int (*xConnect)(sqlite3*, void *pAux, int argc, const char *const*argv, sqlite3_vtab **ppVTab, char**);
-	int (*xBestIndex)(sqlite3_vtab *pVTab, sqlite3_index_info*);
-	int (*xDisconnect)(sqlite3_vtab *pVTab);
-	int (*xDestroy)(sqlite3_vtab *pVTab);
-	int (*xOpen)(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor);
-	int (*xClose)(sqlite3_vtab_cursor*);
-	int (*xFilter)(sqlite3_vtab_cursor*, int idxNum, const char *idxStr, int argc, sqlite3_value **argv);
-	int (*xNext)(sqlite3_vtab_cursor*);
-	int (*xEof)(sqlite3_vtab_cursor*);
-	int (*xColumn)(sqlite3_vtab_cursor*, sqlite3_context*, int);
-	int (*xRowid)(sqlite3_vtab_cursor*, sqlite3_int64 *pRowid);
-	int (*xUpdate)(sqlite3_vtab *, int, sqlite3_value **, sqlite3_int64 *);
-	int (*xBegin)(sqlite3_vtab *pVTab);
-	int (*xSync)(sqlite3_vtab *pVTab);
-	int (*xCommit)(sqlite3_vtab *pVTab);
-	int (*xRollback)(sqlite3_vtab *pVTab);
-	int (*xFindFunction)(sqlite3_vtab *pVtab, int nArg, const char *zName, void (**pxFunc)(sqlite3_context*,int,sqlite3_value**), void **ppArg);
-	int (*xRename)(sqlite3_vtab *pVtab, const char *zNew);
-	// The methods above are in version 1 of the sqlite_module object. Those below are for version 2 and greater.
-	int (*xSavepoint)(sqlite3_vtab *pVTab, int);
-	int (*xRelease)(sqlite3_vtab *pVTab, int);
-	int (*xRollbackTo)(sqlite3_vtab *pVTab, int);
-+/	
-	};
+		int iVersion;
+		int function(sqlite3*, void *pAux, int argc, const char** argv, sqlite3_vtab **ppVTab, char**) xCreate;
+		int function(sqlite3*, void *pAux, int argc, const char** argv, sqlite3_vtab **ppVTab, char**) xConnect;
+		int function(sqlite3_vtab* pVTab, sqlite3_index_info*) xBestIndex;
+		int function(sqlite3_vtab* pVTab) xDisconnect;
+		int function(sqlite3_vtab* pVTab) xDestroy;
+		int function(sqlite3_vtab* pVTab, sqlite3_vtab_cursor** ppCursor) xOpen;
+		int function(sqlite3_vtab_cursor*) xClose;
+		int function(sqlite3_vtab_cursor*, int idxNum, const char* idxStr, int argc, sqlite3_value** argv) xFilter;
+		int function(sqlite3_vtab_cursor*) xNext;
+		int function(sqlite3_vtab_cursor*) xEof;
+		int function(sqlite3_vtab_cursor*, sqlite3_context*, int) xColumn;
+		int function(sqlite3_vtab_cursor*, sqlite3_int64* pRowid) xRowid;
+		int function(sqlite3_vtab*, int, sqlite3_value**, sqlite3_int64*) xUpdate;
+		int function(sqlite3_vtab* pVTab) xBegin;
+		int function(sqlite3_vtab* pVTab) xSync;
+		int function(sqlite3_vtab* pVTab) xCommit;
+		int function(sqlite3_vtab* pVTab) xRollback;
+		int function(sqlite3_vtab* pVtab, int nArg, const char* zName, void function(sqlite3_context*,int,sqlite3_value**)* pxFunc, void **ppArg) xFindFunction;
+		int function(sqlite3_vtab* pVtab, const char* zNew) xRename;
+		// The methods above are in version 1 of the sqlite_module object. Those below are for version 2 and greater.
+		int function(sqlite3_vtab* pVTab, int) xSavepoint;
+		int function(sqlite3_vtab* pVTab, int) xRelease;
+		int function(sqlite3_vtab* pVTab, int) xRollbackTo;
+	}
 
 	// Virtual Table Indexing Information
 	struct sqlite3_index_info
@@ -813,7 +808,7 @@ extern(C)
 		int orderByConsumed;       /* True if output is already ordered */
 		double estimatedCost;      /* Estimated cost of using this index */
 +/
-	};
+	}
 
 	// Virtual Table Constraint Operator Codes
 	enum

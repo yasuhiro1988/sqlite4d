@@ -2,6 +2,88 @@ module sqlite3c;
 
 import core.vararg, std.conv, sqlite3;
 
+// Result Codes
+enum SQLITE
+{
+	OK = SQLITE_OK,
+	ERROR = SQLITE_ERROR,
+	INTERNAL = SQLITE_INTERNAL,
+	PERM = SQLITE_PERM,   
+	ABORT = SQLITE_ABORT,
+	BUSY = SQLITE_BUSY,
+	LOCKED = SQLITE_LOCKED,
+	NOMEM = SQLITE_NOMEM, 
+	READONLY = SQLITE_READONLY,  
+	INTERRUPT = SQLITE_INTERRUPT,
+	IOERR = SQLITE_IOERR,
+	CORRUPT = SQLITE_CORRUPT,  
+	NOTFOUND = SQLITE_NOTFOUND,
+	FULL = SQLITE_FULL,
+	CANTOPEN = SQLITE_CANTOPEN,   
+	PROTOCOL = SQLITE_PROTOCOL,
+	EMPTY = SQLITE_EMPTY,
+	SCHEMA = SQLITE_SCHEMA,  
+	TOOBIG = SQLITE_TOOBIG, 
+	CONSTRAINT = SQLITE_CONSTRAINT,
+	MISMATCH = SQLITE_MISMATCH,
+	MISUSE = SQLITE_MISUSE,
+	NOLFS = SQLITE_NOLFS, 
+	AUTH = SQLITE_AUTH,  
+	FORMAT = SQLITE_FORMAT,   
+	RANGE = SQLITE_RANGE, 
+	NOTADB = SQLITE_NOTADB,  
+	ROW = SQLITE_ROW, 
+	DONE = SQLITE_DONE,    
+}
+
+// Extended Result Codes
+
+// Flags For File Open Operations
+enum SQLITE_OPEN
+{
+	READONLY       = SQLITE_OPEN_READONLY, /* Ok for sqlite3_open_v2() */
+	READWRITE      = SQLITE_OPEN_READWRITE, /* Ok for sqlite3_open_v2() */
+	CREATE         = SQLITE_OPEN_CREATE, /* Ok for sqlite3_open_v2() */
+	DELETEONCLOSE  = SQLITE_OPEN_DELETEONCLOSE, /* VFS only */
+	EXCLUSIVE      = SQLITE_OPEN_EXCLUSIVE, /* VFS only */
+	AUTOPROXY      = SQLITE_OPEN_AUTOPROXY, /* VFS only */
+	URI            = SQLITE_OPEN_URI, /* Ok for sqlite3_open_v2() */
+	MEMORY         = SQLITE_OPEN_MEMORY, /* Ok for sqlite3_open_v2() */
+	MAIN_DB        = SQLITE_OPEN_MAIN_DB, /* VFS only */
+	TEMP_DB        = SQLITE_OPEN_TEMP_DB, /* VFS only */
+	TRANSIENT_DB   = SQLITE_OPEN_TRANSIENT_DB, /* VFS only */
+	MAIN_JOURNAL   = SQLITE_OPEN_MAIN_JOURNAL, /* VFS only */
+	TEMP_JOURNAL   = SQLITE_OPEN_TEMP_JOURNAL, /* VFS only */
+	SUBJOURNAL     = SQLITE_OPEN_SUBJOURNAL, /* VFS only */
+	MASTER_JOURNAL = SQLITE_OPEN_MASTER_JOURNAL, /* VFS only */
+	NOMUTEX        = SQLITE_OPEN_NOMUTEX, /* Ok for sqlite3_open_v2() */
+	FULLMUTEX      = SQLITE_OPEN_FULLMUTEX, /* Ok for sqlite3_open_v2() */
+	SHAREDCACHE    = SQLITE_OPEN_SHAREDCACHE, /* Ok for sqlite3_open_v2() */
+	PRIVATECACHE   = SQLITE_OPEN_PRIVATECACHE, /* Ok for sqlite3_open_v2() */
+	WAL            = SQLITE_OPEN_WAL, /* VFS only */
+	/* Reserved:               = 0x00F00000, */
+}
+
+// Device Characteristics
+
+// File Locking Levels
+enum SQLITE_LOCK
+{
+	NONE      = SQLITE_LOCK_NONE,
+	SHARED    = SQLITE_LOCK_SHARED,
+	RESERVED  = SQLITE_LOCK_RESERVED,
+	PENDING   = SQLITE_LOCK_PENDING,
+	EXCLUSIVE = SQLITE_LOCK_EXCLUSIVE,
+}
+
+// Synchronization Type Flags
+enum SQLITE_SYNC
+{
+	NORMAL   = SQLITE_SYNC_NORMAL,
+	FULL     = SQLITE_SYNC_FULL,
+	DATAONLY = SQLITE_SYNC_DATAONLY,
+}
+
 class sqlite3c
 {
 	sqlite3* db = null;
