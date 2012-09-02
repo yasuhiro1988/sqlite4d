@@ -2,8 +2,6 @@ module sqlite3;
 
 import std.conv;
 
-struct sqlite3_backup;
-
 extern(C)
 {
 	// Run-Time Library Version Numbers
@@ -281,23 +279,10 @@ extern(C)
 	int sqlite3_os_init();
 	int sqlite3_os_end();
 
-	/* Retrieve the mutex for a database connection */
-	sqlite3_mutex* sqlite3_db_mutex(sqlite3* pDb);
-
-	/* Database Connection Status */
-	int sqlite3_db_status(sqlite3* pDb, const int op, int* pCur, int* pHiwtr, const int resetFlg);
-
 
 
 	/* Free Memory Used By A Database Connection */
 	int sqlite3_db_release_memory(sqlite3* pDb);
-
-	/* SQLite Online Backup API */
-	sqlite3_backup* sqlite3_backup_init(sqlite3* pDest, const char* zDestName, sqlite3* pSource, const char* zSourceName);
-	int sqlite3_backup_step(sqlite3_backup* pBackup, int nPage);
-	int sqlite3_backup_finish(sqlite3_backup* pBackup);
-	int sqlite3_backup_remaining(sqlite3_backup* pBackup);
-	int sqlite3_backup_pagecount(sqlite3_backup* pBackup);
 
 	/* Configuring The SQLite Library */
 	int sqlite3_config(int, ...);
@@ -649,9 +634,6 @@ extern(C)
 	#define SQLITE_TRANSIENT   ((sqlite3_destructor_type)-1)
 	*/
 
-	/* Prepared Statement Status */
-	int sqlite3_stmt_status(sqlite3_stmt* pStmt, int op, int resetFlg);
-
 	// Setting The Result Of An SQL Function
 	void sqlite3_result_blob(sqlite3_context*, const void*, int, void function(void*));
 	void sqlite3_result_double(sqlite3_context*, double);
@@ -854,12 +836,227 @@ extern(C)
 	int sqlite3_blob_open(sqlite3* pDb, const char* zDb, const char* zTable, const char* zColumn, sqlite3_int64 iRow, int flags, sqlite3_blob** ppBlob);
 
 	// Move a BLOB Handle to a New Row
-	//SQLITE_EXPERIMENTAL
+	// SQLITE_EXPERIMENTAL
 	int sqlite3_blob_reopen(sqlite3_blob*, sqlite3_int64);
 
 	// Close A BLOB Handle
 	int sqlite3_blob_close(sqlite3_blob*);
 
+	// Return The Size Of An Open BLOB
+	int sqlite3_blob_bytes(sqlite3_blob *);
+
+	// Read Data From A BLOB Incrementally
+	int sqlite3_blob_read(sqlite3_blob *, void *Z, int N, int iOffset);
+
+	// Write Data Into A BLOB Incrementally
+	int sqlite3_blob_write(sqlite3_blob *, const void *z, int n, int iOffset);
+
+	// Virtual File System Objects
+	sqlite3_vfs* sqlite3_vfs_find(const char* zVfsName);
+	int sqlite3_vfs_register(sqlite3_vfs*, int makeDflt);
+	int sqlite3_vfs_unregister(sqlite3_vfs*);
+
+	// Mutexes
+	sqlite3_mutex* sqlite3_mutex_alloc(int);
+	void sqlite3_mutex_free(sqlite3_mutex*);
+	void sqlite3_mutex_enter(sqlite3_mutex*);
+	int sqlite3_mutex_try(sqlite3_mutex*);
+	void sqlite3_mutex_leave(sqlite3_mutex*);
+
+	// Mutex Methods Object
+	struct sqlite3_mutex_methods
+	{
+		int function() xMutexInit;
+		int function() xMutexEnd;
+		sqlite3_mutex* function(int) xMutexAlloc;
+		void function(sqlite3_mutex*) xMutexFree;
+		void function(sqlite3_mutex*) xMutexEnter;
+		int function(sqlite3_mutex*) xMutexTry;
+		void function(sqlite3_mutex*) xMutexLeave;
+		int function(sqlite3_mutex*) xMutexHeld;
+		int function(sqlite3_mutex*) xMutexNotheld;
+	}
+
+	// Mutex Verification Routines
+	int sqlite3_mutex_held(sqlite3_mutex* pMutex);
+	int sqlite3_mutex_notheld(sqlite3_mutex* pMutex);
+
+	// Mutex Types
+	enum
+	{
+		SQLITE_MUTEX_FAST          = 0,
+		SQLITE_MUTEX_RECURSIVE     = 1,
+		SQLITE_MUTEX_STATIC_MASTER = 2,
+		SQLITE_MUTEX_STATIC_MEM    = 3, /* sqlite3_malloc() */
+		SQLITE_MUTEX_STATIC_MEM2   = 4, /* NOT USED */
+		SQLITE_MUTEX_STATIC_OPEN   = 4, /* sqlite3BtreeOpen() */
+		SQLITE_MUTEX_STATIC_PRNG   = 5, /* sqlite3_random() */
+		SQLITE_MUTEX_STATIC_LRU    = 6, /* lru page list */
+		SQLITE_MUTEX_STATIC_LRU2   = 7, /* NOT USED */
+		SQLITE_MUTEX_STATIC_PMEM   = 7, /* sqlite3PageMalloc() */
+	}
+
+	// Retrieve the mutex for a database connection
+	sqlite3_mutex* sqlite3_db_mutex(sqlite3* pDb);
+
+	// Low-Level Control Of Database Files
+	int sqlite3_file_control(sqlite3* pDb, const char* zDbName, int op, void*);
+
+	// Testing Interface
+	int sqlite3_test_control(int op, ...);
+
+	// Testing Interface Operation Codes
+	enum
+	{	
+		SQLITE_TESTCTRL_FIRST               =  5,
+		SQLITE_TESTCTRL_PRNG_SAVE           =  5,
+		SQLITE_TESTCTRL_PRNG_RESTORE        =  6,
+		SQLITE_TESTCTRL_PRNG_RESET          =  7,
+		SQLITE_TESTCTRL_BITVEC_TEST         =  8,
+		SQLITE_TESTCTRL_FAULT_INSTALL       =  9,
+		SQLITE_TESTCTRL_BENIGN_MALLOC_HOOKS = 10,
+		SQLITE_TESTCTRL_PENDING_BYTE        = 11,
+		SQLITE_TESTCTRL_ASSERT              = 12,
+		SQLITE_TESTCTRL_ALWAYS              = 13,
+		SQLITE_TESTCTRL_RESERVE             = 14,
+		SQLITE_TESTCTRL_OPTIMIZATIONS       = 15,
+		SQLITE_TESTCTRL_ISKEYWORD           = 16,
+		SQLITE_TESTCTRL_SCRATCHMALLOC       = 17,
+		SQLITE_TESTCTRL_LOCALTIME_FAULT     = 18,
+		SQLITE_TESTCTRL_EXPLAIN_STMT        = 19,
+		SQLITE_TESTCTRL_LAST                = 19,
+	}
+
+	// SQLite Runtime Status
+	int sqlite3_status(int op, int* pCurrent, int* pHighwater, int resetFlag);
+
+	// Status Parameters
+	enum
+	{
+		SQLITE_STATUS_MEMORY_USED        = 0,
+		SQLITE_STATUS_PAGECACHE_USED     = 1,
+		SQLITE_STATUS_PAGECACHE_OVERFLOW = 2,
+		SQLITE_STATUS_SCRATCH_USED       = 3,
+		SQLITE_STATUS_SCRATCH_OVERFLOW   = 4,
+		SQLITE_STATUS_MALLOC_SIZE        = 5,
+		SQLITE_STATUS_PARSER_STACK       = 6,
+		SQLITE_STATUS_PAGECACHE_SIZE     = 7,
+		SQLITE_STATUS_SCRATCH_SIZE       = 8,
+		SQLITE_STATUS_MALLOC_COUNT       = 9,
+	}
+
+	// Database Connection Status
+	int sqlite3_db_status(sqlite3* pDb, const int op, int* pCur, int* pHiwtr, const int resetFlg);
+
+	// Status Parameters for database connections
+	enum
+	{
+		SQLITE_DBSTATUS_LOOKASIDE_USED      = 0,
+		SQLITE_DBSTATUS_CACHE_USED          = 1,
+		SQLITE_DBSTATUS_SCHEMA_USED         = 2,
+		SQLITE_DBSTATUS_STMT_USED           = 3,
+		SQLITE_DBSTATUS_LOOKASIDE_HIT       = 4,
+		SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE = 5,
+		SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL = 6,
+		SQLITE_DBSTATUS_CACHE_HIT           = 7,
+		SQLITE_DBSTATUS_CACHE_MISS          = 8,
+		SQLITE_DBSTATUS_CACHE_WRITE         = 9,
+		SQLITE_DBSTATUS_MAX                 = 9, /* Largest defined DBSTATUS */
+	}
+
+	// Prepared Statement Status
+	int sqlite3_stmt_status(sqlite3_stmt* pStmt, int op, int resetFlg);
+
+	// Status Parameters for prepared statements
+	enum
+	{
+		SQLITE_STMTSTATUS_FULLSCAN_STEP = 1,
+		SQLITE_STMTSTATUS_SORT          = 2,
+		SQLITE_STMTSTATUS_AUTOINDEX     = 3,
+	}
+
+	// Custom Page Cache Object
+	struct sqlite3_pcache;
+	struct sqlite3_pcache_page
+	{
+		void* pBuf;        /* The content of the page */
+		void* pExtra;      /* Extra information associated with the page */
+	}
+
+	// Application Defined Page Cache.
+	struct sqlite3_pcache_methods2
+	{
+		int iVersion;
+		void* pArg;
+		/+
+		int (*xInit)(void*);
+		void (*xShutdown)(void*);
+		sqlite3_pcache *(*xCreate)(int szPage, int szExtra, int bPurgeable);
+		void (*xCachesize)(sqlite3_pcache*, int nCachesize);
+		int (*xPagecount)(sqlite3_pcache*);
+		sqlite3_pcache_page *(*xFetch)(sqlite3_pcache*, unsigned key, int createFlag);
+		void (*xUnpin)(sqlite3_pcache*, sqlite3_pcache_page*, int discard);
+		void (*xRekey)(sqlite3_pcache*, sqlite3_pcache_page*, 
+					   unsigned oldKey, unsigned newKey);
+		void (*xTruncate)(sqlite3_pcache*, unsigned iLimit);
+		void (*xDestroy)(sqlite3_pcache*);
+		void (*xShrink)(sqlite3_pcache*);
+		+/
+	}
+
+	// This is the obsolete pcache_methods object that has now been replaced by sqlite3_pcache_methods2
+	deprecated struct sqlite3_pcache_methods
+	{
+		void* pArg;
+		/+
+		int (*xInit)(void*);
+		void (*xShutdown)(void*);
+		sqlite3_pcache *(*xCreate)(int szPage, int bPurgeable);
+		void (*xCachesize)(sqlite3_pcache*, int nCachesize);
+		int (*xPagecount)(sqlite3_pcache*);
+		void *(*xFetch)(sqlite3_pcache*, unsigned key, int createFlag);
+		void (*xUnpin)(sqlite3_pcache*, void*, int discard);
+		void (*xRekey)(sqlite3_pcache*, void*, unsigned oldKey, unsigned newKey);
+		void (*xTruncate)(sqlite3_pcache*, unsigned iLimit);
+		void (*xDestroy)(sqlite3_pcache*);
+		+/
+	}
+
+	// Online Backup Object
+	struct sqlite3_backup;
+	
+	// SQLite Online Backup API
+	sqlite3_backup* sqlite3_backup_init(sqlite3* pDest, const char* zDestName, sqlite3* pSource, const char* zSourceName);
+	int sqlite3_backup_step(sqlite3_backup* pBackup, int nPage);
+	int sqlite3_backup_finish(sqlite3_backup* pBackup);
+	int sqlite3_backup_remaining(sqlite3_backup* pBackup);
+	int sqlite3_backup_pagecount(sqlite3_backup* pBackup);
+
+	// Unlock Notification
+	int sqlite3_unlock_notify(sqlite3 *pBlocked, void function(void** apArg, int nArg) xNotify, void* pNotifyArg);
+
+	// String Comparison
+	int sqlite3_stricmp(const char*, const char*);
+	int sqlite3_strnicmp(const char*, const char*, int);
+
 	// Error Logging Interface
 	void sqlite3_log(int iErrCode, const char* zFormat, ...);
+
+	// Write-Ahead Log Commit Hook
+	void* sqlite3_wal_hook(sqlite3* pDb, int function(void*, sqlite3*, const char*, int), void*);
+
+	// Configure an auto-checkpoint
+	int sqlite3_wal_autocheckpoint(sqlite3* pDb, int N);
+
+	// Checkpoint a database
+	int sqlite3_wal_checkpoint(sqlite3* pDb, const char* zDb);
+	int sqlite3_wal_checkpoint_v2(sqlite3* pDb, const char* zDb, int eMode, int* pnLog, int* pnCkpt);
+
+	// Checkpoint operation parameters
+	enum
+	{
+		SQLITE_CHECKPOINT_PASSIVE = 0,
+		SQLITE_CHECKPOINT_FULL    = 1,
+		SQLITE_CHECKPOINT_RESTART = 2,
+	}
 }
