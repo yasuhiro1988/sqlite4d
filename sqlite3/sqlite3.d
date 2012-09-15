@@ -5,7 +5,7 @@ import std.conv;
 extern(C)
 {
 	// Run-Time Library Version Numbers
-	@property string sqlite3_version() { return sqlite3_libversion().to!string(); }
+	extern immutable(char*) sqlite3_version;
 	char* sqlite3_libversion();
 	char* sqlite3_sourceid();
 	int sqlite3_libversion_number();
