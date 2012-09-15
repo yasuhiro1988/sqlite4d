@@ -763,31 +763,38 @@ extern(C)
 	// Virtual Table Indexing Information
 	struct sqlite3_index_info
 	{
-/+
 		/* Inputs */
-		int nConstraint;           /* Number of entries in aConstraint */
-		struct sqlite3_index_constraint {
-			int iColumn;              /* Column on left-hand side of constraint */
-			unsigned char op;         /* Constraint operator */
-			unsigned char usable;     /* True if this constraint is usable */
-			int iTermOffset;          /* Used internally - xBestIndex should ignore */
-		} *aConstraint;            /* Table of WHERE clause constraints */
-		int nOrderBy;              /* Number of terms in the ORDER BY clause */
-		struct sqlite3_index_orderby {
-			int iColumn;              /* Column number */
-			unsigned char desc;       /* True for DESC.  False for ASC. */
-		} *aOrderBy;               /* The ORDER BY clause */
+		int nConstraint;                                 /* Number of entries in aConstraint */
+		sqlite3_index_constraint* aConstraint;           /* Table of WHERE clause constraints */
+		int nOrderBy;                                    /* Number of terms in the ORDER BY clause */
+		sqlite3_index_orderby* aOrderBy;                 /* The ORDER BY clause */
 		/* Outputs */
-		struct sqlite3_index_constraint_usage {
-			int argvIndex;           /* if >0, constraint is part of argv to xFilter */
-			unsigned char omit;      /* Do not code a test for this constraint */
-		} *aConstraintUsage;
-		int idxNum;                /* Number used to identify the index */
-		char *idxStr;              /* String, possibly obtained from sqlite3_malloc */
-		int needToFreeIdxStr;      /* Free idxStr using sqlite3_free() if true */
-		int orderByConsumed;       /* True if output is already ordered */
-		double estimatedCost;      /* Estimated cost of using this index */
-+/
+		sqlite3_index_constraint_usage* aConstraintUsage;
+		int idxNum;                                      /* Number used to identify the index */
+		char* idxStr;                                    /* String, possibly obtained from sqlite3_malloc */
+		int needToFreeIdxStr;                            /* Free idxStr using sqlite3_free() if true */
+		int orderByConsumed;                             /* True if output is already ordered */
+		double estimatedCost;                            /* Estimated cost of using this index */
+	}
+
+	struct sqlite3_index_constraint
+	{
+		int iColumn;              /* Column on left-hand side of constraint */
+		ubyte op;         /* Constraint operator */
+		ubyte usable;     /* True if this constraint is usable */
+		int iTermOffset;          /* Used internally - xBestIndex should ignore */
+	}
+
+	struct sqlite3_index_orderby
+	{
+		int iColumn;              /* Column number */
+		ubyte desc;       /* True for DESC.  False for ASC. */
+	}
+
+	struct sqlite3_index_constraint_usage
+	{
+		int argvIndex;           /* if >0, constraint is part of argv to xFilter */
+		ubyte omit;      /* Do not code a test for this constraint */
 	}
 
 	// Virtual Table Constraint Operator Codes
@@ -986,38 +993,33 @@ extern(C)
 	{
 		int iVersion;
 		void* pArg;
-		/+
-		int (*xInit)(void*);
-		void (*xShutdown)(void*);
-		sqlite3_pcache *(*xCreate)(int szPage, int szExtra, int bPurgeable);
-		void (*xCachesize)(sqlite3_pcache*, int nCachesize);
-		int (*xPagecount)(sqlite3_pcache*);
-		sqlite3_pcache_page *(*xFetch)(sqlite3_pcache*, unsigned key, int createFlag);
-		void (*xUnpin)(sqlite3_pcache*, sqlite3_pcache_page*, int discard);
-		void (*xRekey)(sqlite3_pcache*, sqlite3_pcache_page*, 
-					   unsigned oldKey, unsigned newKey);
-		void (*xTruncate)(sqlite3_pcache*, unsigned iLimit);
-		void (*xDestroy)(sqlite3_pcache*);
-		void (*xShrink)(sqlite3_pcache*);
-		+/
+		int function(void*) xInit;
+		void function(void*) xShutdown;
+		sqlite3_pcache* function(int szPage, int szExtra, int bPurgeable) xCreate;
+		void function(sqlite3_pcache*, int nCachesize) xCachesize;
+		int function(sqlite3_pcache*) xPagecount;
+		sqlite3_pcache_page* function(sqlite3_pcache*, uint key, int createFlag) xFetch;
+		void function(sqlite3_pcache*, sqlite3_pcache_page*, int discard) xUnpin;
+		void function(sqlite3_pcache*, sqlite3_pcache_page*, uint oldKey, uint newKey) xRekey;
+		void function(sqlite3_pcache*, uint iLimit) xTruncate;
+		void function(sqlite3_pcache*) xDestroy;
+		void function(sqlite3_pcache*) xShrink;
 	}
 
 	// This is the obsolete pcache_methods object that has now been replaced by sqlite3_pcache_methods2
 	deprecated struct sqlite3_pcache_methods
 	{
 		void* pArg;
-		/+
-		int (*xInit)(void*);
-		void (*xShutdown)(void*);
-		sqlite3_pcache *(*xCreate)(int szPage, int bPurgeable);
-		void (*xCachesize)(sqlite3_pcache*, int nCachesize);
-		int (*xPagecount)(sqlite3_pcache*);
-		void *(*xFetch)(sqlite3_pcache*, unsigned key, int createFlag);
-		void (*xUnpin)(sqlite3_pcache*, void*, int discard);
-		void (*xRekey)(sqlite3_pcache*, void*, unsigned oldKey, unsigned newKey);
-		void (*xTruncate)(sqlite3_pcache*, unsigned iLimit);
-		void (*xDestroy)(sqlite3_pcache*);
-		+/
+		int function(void*) xInit;
+		void function(void*) xShutdown;
+		sqlite3_pcache* function(int szPage, int bPurgeable) xCreate;
+		void function(sqlite3_pcache*, int nCachesize) xCachesize;
+		int function(sqlite3_pcache*) xPagecount;
+		void* function(sqlite3_pcache*, uint key, int createFlag) xFetch;
+		void function(sqlite3_pcache*, void*, int discard) xUnpin;
+		void function(sqlite3_pcache*, void*, uint oldKey, uint newKey) xRekey;
+		void function(sqlite3_pcache*, uint iLimit) xTruncate;
+		void function(sqlite3_pcache*) xDestroy;
 	}
 
 	// Online Backup Object
@@ -1058,7 +1060,14 @@ extern(C)
 		SQLITE_CHECKPOINT_RESTART = 2,
 	}
 
-	// ***************************************
+	// Virtual Table Interface Configuration
+	int sqlite3_vtab_config(sqlite3*, int op, ...);
+
+	// Virtual Table Configuration Options
+	enum
+	{
+		SQLITE_VTAB_CONSTRAINT_SUPPORT = 1,
+	}
 
 	// Determine The Virtual Table Conflict Policy
 	int sqlite3_vtab_on_conflict(sqlite3* pDb);
@@ -1088,6 +1097,6 @@ extern(C)
 		int nParam;                     /* Size of array aParam[] */
 		double* aParam;                 /* Parameters passed to SQL geom function */
 		void* pUser;                    /* Callback implementation user data */
-		void function(void*) xDelUser;       /* Called by SQLite to clean up pUser */
+		void function(void*) xDelUser;  /* Called by SQLite to clean up pUser */
 	}
 }
