@@ -5,10 +5,7 @@ import std.conv;
 extern(C)
 {
 	// Run-Time Library Version Numbers
-	@property string sqlite3_version()
-	{
-		return sqlite3_libversion().to!string();
-	}
+	@property string sqlite3_version() { return sqlite3_libversion().to!string(); }
 	char* sqlite3_libversion();
 	char* sqlite3_sourceid();
 	int sqlite3_libversion_number();
@@ -29,6 +26,7 @@ extern(C)
 
 	// Closing A Database Connection
 	int sqlite3_close(sqlite3* pDb);
+	int sqlite3_close_v2(sqlite3* pDb);
 
 	// The type for a callback function
 	alias int function(void* notused, int argc, char** argv, char** zColName) sqlite3_callback;
@@ -1058,5 +1056,38 @@ extern(C)
 		SQLITE_CHECKPOINT_PASSIVE = 0,
 		SQLITE_CHECKPOINT_FULL    = 1,
 		SQLITE_CHECKPOINT_RESTART = 2,
+	}
+
+	// ***************************************
+
+	// Determine The Virtual Table Conflict Policy
+	int sqlite3_vtab_on_conflict(sqlite3* pDb);
+
+	// Conflict resolution modes
+	enum
+	{
+		SQLITE_ROLLBACK = 1,
+		/* SQLITE_IGNORE= 2, // Also used by sqlite3_authorizer() callback */
+		SQLITE_FAIL     = 3,
+		/* SQLITE_ABORT = 4,  // Also an error code */
+		SQLITE_REPLACE  = 5,
+	}
+
+	version(SQLITE_RTREE_INT_ONLY)
+	{
+		int sqlite3_rtree_geometry_callback(sqlite3* pDb, const char* zGeom, int function(sqlite3_rtree_geometry*, int n, sqlite3_int64 *a, int *pRes) xGeom, void* pContext);
+	}
+	else
+	{
+		int sqlite3_rtree_geometry_callback(sqlite3 *oDb, const char *zGeom, int function(sqlite3_rtree_geometry*, int n, double* a, int* pRes) xGeom, void* pContext);
+	}
+
+	struct sqlite3_rtree_geometry
+	{
+		void* pContext;                 /* Copy of pContext passed to s_r_g_c() */
+		int nParam;                     /* Size of array aParam[] */
+		double* aParam;                 /* Parameters passed to SQL geom function */
+		void* pUser;                    /* Callback implementation user data */
+		void function(void*) xDelUser;       /* Called by SQLite to clean up pUser */
 	}
 }

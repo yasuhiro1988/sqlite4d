@@ -37,6 +37,39 @@ enum SQLITE
 }
 
 // Extended Result Codes
+enum SQLITE_EXTENDED
+{
+	SQLITE_IOERR_READ              = (SQLITE_IOERR | (1<<8))   ,
+	SQLITE_IOERR_SHORT_READ        = (SQLITE_IOERR | (2<<8))   ,
+	SQLITE_IOERR_WRITE             = (SQLITE_IOERR | (3<<8))   ,
+	SQLITE_IOERR_FSYNC             = (SQLITE_IOERR | (4<<8))   ,
+	SQLITE_IOERR_DIR_FSYNC         = (SQLITE_IOERR | (5<<8))   ,
+	SQLITE_IOERR_TRUNCATE          = (SQLITE_IOERR | (6<<8))   ,
+	SQLITE_IOERR_FSTAT             = (SQLITE_IOERR | (7<<8))   ,
+	SQLITE_IOERR_UNLOCK            = (SQLITE_IOERR | (8<<8))   ,
+	SQLITE_IOERR_RDLOCK            = (SQLITE_IOERR | (9<<8))   ,
+	SQLITE_IOERR_DELETE            = (SQLITE_IOERR | (10<<8))  ,
+	SQLITE_IOERR_BLOCKED           = (SQLITE_IOERR | (11<<8))  ,
+	SQLITE_IOERR_NOMEM             = (SQLITE_IOERR | (12<<8))  ,
+	SQLITE_IOERR_ACCESS            = (SQLITE_IOERR | (13<<8))  ,
+	SQLITE_IOERR_CHECKRESERVEDLOCK = (SQLITE_IOERR | (14<<8))  ,
+	SQLITE_IOERR_LOCK              = (SQLITE_IOERR | (15<<8))  ,
+	SQLITE_IOERR_CLOSE             = (SQLITE_IOERR | (16<<8))  ,
+	SQLITE_IOERR_DIR_CLOSE         = (SQLITE_IOERR | (17<<8))  ,
+	SQLITE_IOERR_SHMOPEN           = (SQLITE_IOERR | (18<<8))  ,
+	SQLITE_IOERR_SHMSIZE           = (SQLITE_IOERR | (19<<8))  ,
+	SQLITE_IOERR_SHMLOCK           = (SQLITE_IOERR | (20<<8))  ,
+	SQLITE_IOERR_SHMMAP            = (SQLITE_IOERR | (21<<8))  ,
+	SQLITE_IOERR_SEEK              = (SQLITE_IOERR | (22<<8))  ,
+	SQLITE_LOCKED_SHAREDCACHE      = (SQLITE_LOCKED |  (1<<8)) ,
+	SQLITE_BUSY_RECOVERY           = (SQLITE_BUSY   |  (1<<8)) ,
+	SQLITE_CANTOPEN_NOTEMPDIR      = (SQLITE_CANTOPEN | (1<<8)),
+	SQLITE_CANTOPEN_ISDIR          = (SQLITE_CANTOPEN | (2<<8)),
+	SQLITE_CORRUPT_VTAB            = (SQLITE_CORRUPT | (1<<8)) ,
+	SQLITE_READONLY_RECOVERY       = (SQLITE_READONLY | (1<<8)),
+	SQLITE_READONLY_CANTLOCK       = (SQLITE_READONLY | (2<<8)),
+	SQLITE_ABORT_ROLLBACK          = (SQLITE_ABORT | (2<<8))   ,
+}
 
 // Flags For File Open Operations
 enum SQLITE_OPEN
@@ -91,6 +124,7 @@ enum SQLITE_MUTEX
 {
 	FAST          = SQLITE_MUTEX_FAST,
 	RECURSIVE     = SQLITE_MUTEX_RECURSIVE,
+	// Static mutexes are for internal use by SQLite only
 	STATIC_MASTER = SQLITE_MUTEX_STATIC_MASTER,
 	STATIC_MEM    = SQLITE_MUTEX_STATIC_MEM, /* sqlite3_malloc() */
 	STATIC_MEM2   = SQLITE_MUTEX_STATIC_MEM2, /* NOT USED */
@@ -101,7 +135,27 @@ enum SQLITE_MUTEX
 	STATIC_PMEM   = SQLITE_MUTEX_STATIC_PMEM, /* sqlite3PageMalloc() */
 }
 
-/////
+// Testing Interface Operation Codes
+enum SQLITE_TESTCTRL
+{	
+	FIRST               = SQLITE_TESTCTRL_FIRST,
+	PRNG_SAVE           = SQLITE_TESTCTRL_PRNG_SAVE,
+	PRNG_RESTORE        = SQLITE_TESTCTRL_PRNG_RESTORE,
+	PRNG_RESET          = SQLITE_TESTCTRL_PRNG_RESET,
+	BITVEC_TEST         = SQLITE_TESTCTRL_BITVEC_TEST,
+	FAULT_INSTALL       = SQLITE_TESTCTRL_FAULT_INSTALL,
+	BENIGN_MALLOC_HOOKS = SQLITE_TESTCTRL_BENIGN_MALLOC_HOOKS,
+	PENDING_BYTE        = SQLITE_TESTCTRL_PENDING_BYTE,
+	ASSERT              = SQLITE_TESTCTRL_ASSERT,
+	ALWAYS              = SQLITE_TESTCTRL_ALWAYS,
+	RESERVE             = SQLITE_TESTCTRL_RESERVE,
+	OPTIMIZATIONS       = SQLITE_TESTCTRL_OPTIMIZATIONS,
+	ISKEYWORD           = SQLITE_TESTCTRL_ISKEYWORD,
+	SCRATCHMALLOC       = SQLITE_TESTCTRL_SCRATCHMALLOC,
+	LOCALTIME_FAULT     = SQLITE_TESTCTRL_LOCALTIME_FAULT,
+	EXPLAIN_STMT        = SQLITE_TESTCTRL_EXPLAIN_STMT,
+	LAST                = SQLITE_TESTCTRL_LAST,
+}
 
 // Status Parameters
 enum SQLITE_STATUS
@@ -150,6 +204,16 @@ enum SQLITE_CHECKPOINT
 	RESTART = SQLITE_CHECKPOINT_RESTART,
 }
 
+// Conflict resolution modes
+enum SQLITE_CONFLICT
+{
+	ROLLBACK = SQLITE_ROLLBACK,
+	/* IGNORE = SQLITE_IGNORE, // Also used by sqlite3_authorizer() callback */
+	FAIL     = SQLITE_FAIL,
+	/* ABORT = SQLITE_ABORT,  // Also an error code */
+	REPLACE  = SQLITE_REPLACE,
+}
+
 class sqlite3c
 {
 	sqlite3* db = null;
@@ -183,6 +247,11 @@ class sqlite3c
 	int close()
 	{
 		return sqlite3_close(db);
+	}
+
+	int close_v2()
+	{
+		return sqlite3_close_v2(db);
 	}
 
 	// One-Step Query Execution Interface
@@ -448,6 +517,38 @@ class sqlite3c
 	void log(int iErrCode, const char *zFormat, ...)
 	{
 		return sqlite3_log(iErrCode, zFormat, _arguments);
+	}
+
+	
+	sqlite3_mutex* mutex_alloc(int i) const
+	{
+		return sqlite3_mutex_alloc(i);
+	}
+
+	sqlite3_mutex* mutex_alloc(SQLITE_MUTEX nonstatic) const
+	{
+		SQLITE_MUTEX a;
+		return sqlite3_mutex_alloc(cast(int)nonstatic);
+	}
+
+	void mutex_free(sqlite3_mutex* pMutex) const
+	{
+		sqlite3_mutex_free(pMutex);
+	}
+
+	void mutex_enter(sqlite3_mutex* pMutex) const
+	{
+		sqlite3_mutex_enter(pMutex);
+	}
+
+	int mutex_try(sqlite3_mutex* pMutex) const
+	{
+		return sqlite3_mutex_try(pMutex);
+	}
+
+	void mutex_leave(sqlite3_mutex* pMutex) const
+	{
+		sqlite3_mutex_leave(pMutex);
 	}
 
 	// SQLite Runtime Status
